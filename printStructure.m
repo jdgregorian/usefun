@@ -117,19 +117,21 @@ end
 function str = printVal(str, val)
 % function checks the class of value and prints it in appropriate format
 
+  % empty set
   if isempty(val)
     if iscell(val)
       str = prt(str, '{}');
     else
       str = prt(str, '[]');
     end
-  elseif iscell(val) || (numel(val) > 1 && ~ischar(val))
   % cell or any kind of array (except char)
+  elseif iscell(val) || (numel(val) > 1 && ~ischar(val))
     str = printArray(str, val);
+  % rest of classes
   else
     switch class(val)
       case 'char'
-        str = prt(str, '''%s''', val);
+        str = printChar(str, val);
       case 'double'
         % NaN and Inf verification is part of condition because they cannot 
         % be converted to logicals
@@ -212,4 +214,22 @@ function str = printStruct(str, s)
     str = printVal(str, s.(sf{fnum}));
   end
   str = prt(str, ')');
+end
+
+function str = printChar(str, val)
+% prints char values row by row
+
+  if size(val, 1) > 1
+    str = prt(str, '[');
+    % first row
+    str = prt(str, '''%s''', val(1, :));
+    % rest of rows
+    for r = 2:size(val,1)
+      str = prt(str, '; ');
+      str = prt(str, '''%s''', val(r, :));
+    end
+    str = prt(str, ']');
+  else
+    str = prt(str, '''%s''', val);
+  end
 end

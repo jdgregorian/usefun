@@ -16,6 +16,7 @@ function fileList = searchFile(folder, name)
 %   dir
 
   if nargin < 1
+    name = '*';
     folder = '.';
   end
   if nargin == 1

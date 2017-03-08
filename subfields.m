@@ -10,7 +10,8 @@ function sf = subfields(thisStruct)
    deletesf = false(1,Nsf);
    
    for fnum = 1:Nsf
-     if isstruct(thisStruct.(sf{fnum}))
+     % continue only if the field is non-empty structure
+     if isstruct(thisStruct.(sf{fnum})) && ~isempty(fieldnames(thisStruct.(sf{fnum})))
        [sRows, sCols] = size(thisStruct.(sf{fnum}));
        % single structure case
        if sRows == 1 && sCols == 1
@@ -24,7 +25,7 @@ function sf = subfields(thisStruct)
        % structure array
        else
          for r = 1:sRows
-           for c = 1: sCols
+           for c = 1:sCols
              sf = catSub(thisStruct.(sf{fnum})(r,c), sf, fnum, ['(', num2str(r), ',', num2str(c), ')']);
            end
          end

@@ -1,19 +1,23 @@
-function [df, dVals] = difField(varargin)
-% [df, dVals] = difField(s1, s2, ...) return structure different field
-% values and its fieldnames.
+function [df, dVals, emptyVals] = difField(varargin)
+% [df, dVals, emptyVals] = difField(s1, s2, ...) return structure different
+% field values and its fieldnames.
 %
 % Input:
 %   s1, s2, ... - structures to compare | struct or cell-array of struct
 %
 % Output:
-%   df    - different fields among tested structures | cell-array of char
-%   dVals - different values in df | cell-array
+%   df        - different fields among tested structures | cell-array of 
+%               char
+%   dVals     - different values in df | cell-array
+%   emptyVals - empty values marker in df | logical
 %
 % Note:
 %   Empty cells are ignored, empty structures are not.
 
-  df = {};
-  dVals = {};
+  if nargout > 0
+    df = {};
+    dVals = {};
+  end
   
   if nargin < 1
     help difField
@@ -36,6 +40,7 @@ function [df, dVals] = difField(varargin)
   % one structure case is not comparable
   nStruct = length(strCell);
   if nStruct < 2
+    df = {};
     return
   end
   
@@ -46,17 +51,25 @@ function [df, dVals] = difField(varargin)
   
   % gain field values
   subVal = cell(nSubfields, nStruct);
+  emptyValues = false(nSubfields, nStruct);
   for s = 1:nStruct
     for f = 1:nSubfields
       try
         subVal{f, s} = eval(['strCell{s}.', uniqueSubfields{f}]);
+        % if the field does not exist in the structure the following
+        % command will not be performed
+        emptyValues(f, s) = isempty(subVal{f, s});
       catch
       end
     end
   end
   
   % gain different fields and its values
-  diffID = arrayfun(@(x) ~isequal(subVal{x,:}), 1:nSubfields);
+  diffID = arrayfun(@(x) ~isequaln(subVal{x,:}), 1:nSubfields);
+  % checkout empty fields
+  diffID = diffID | arrayfun(@(x) any(emptyValues(x,:)) & ~all(emptyValues(x,:)), 1:nSubfields);
+  % checkout NaN values because isequal returns O when values are NaN
   df = uniqueSubfields(diffID);
   dVals = subVal(diffID, :);
+  emptyVals = emptyValues(diffID, :);
 end

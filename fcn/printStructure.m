@@ -1,7 +1,6 @@
 function str = printStructure(structure, varargin)
 % printStructure(structure, FID) prints all fields and values of 
-% 'structure' to file 'FID'. Printed structures and its fields can be of
-% size 2 at maximum.
+% 'structure' to file 'FID'. 
 %
 % printStructure(structure, FID, settings) prints 'structure' to file 'FID'
 % with additional settings.
@@ -18,9 +17,24 @@ function str = printStructure(structure, varargin)
 %                                  'value'  - returns only field values
 %                                  'field'  - does not return structure 
 %                                             name
+%
+% Output:
+%   str - resulting string
+%
+% Notes:
+%   - Printed structures and its fields can have size 2 at maximum. The
+%     remaining dimensions will not be printed.
+%   - Table is printed without Properties. Only VariableNames and RowNames
+%     are included.
+%   - Objects (or instances of any class having printable fields by 
+%     fieldnames function) are printed in format: ClassName('Property1', 
+%     Value1, 'Property2', Value2, ...). Such command (created using this 
+%     function) probably will not be functional.
 
 % TODO:
-%   increase dimension of printed structures and its values (printArray)
+%   - increase dimension of printed structures and its values (printArray)
+%   - additional properties of table
+%   - categorical data
 
   str = [];
   if nargin < 2 || ~isnumeric(varargin{1})
@@ -71,7 +85,7 @@ function str = printStructure(structure, varargin)
     % eval due to multiple subfields
     valueSF = eval(['extraStruct.', settingsSF{sf}]);
     % array settings
-    if numel(valueSF) > 1 && ~ischar(valueSF)
+    if numel(valueSF) > 1 && ~ischar(valueSF) && ~istable(valueSF)
       str = printArray(str, valueSF);
     % non-array value
     else
@@ -119,13 +133,9 @@ function str = printVal(str, val)
 
   % empty set
   if isempty(val)
-    if iscell(val)
-      str = prt(str, '{}');
-    else
-      str = prt(str, '[]');
-    end
-  % cell or any kind of array (except char)
-  elseif iscell(val) || (numel(val) > 1 && ~ischar(val))
+    str = printEmpty(str, val);
+  % cell or any kind of array (except char and table)
+  elseif iscell(val) || (numel(val) > 1 && ~ischar(val) && ~istable(val))
     str = printArray(str, val);
   % rest of classes
   else
@@ -133,9 +143,22 @@ function str = printVal(str, val)
       case 'char'
         str = printChar(str, val);
       case 'double'
+        % complex numbers
+        ival = imag(val);
+        if ival ~= 0
+          str = printVal(str, real(val));
+          if isnan(ival)
+            str = prt(str, '+NaN*1i');
+          else
+            if ival > 0
+              str = prt(str, '+');
+            end
+            str = printVal(str, ival);
+            str = prt(str, 'i');
+          end
         % NaN and Inf verification is part of condition because they cannot 
         % be converted to logicals
-        if (isnan(val) || val == Inf || (mod(val,1) && abs(val) > 1))
+        elseif (isnan(val) || abs(val) == Inf || (mod(val,1) && abs(val) > 1))
           str = prt(str, '%f', val);
         elseif mod(val,1)
           str = prt(str, '%g', val);
@@ -152,8 +175,22 @@ function str = printVal(str, val)
         str = prt(str, '@%s', func2str(val));
       case 'struct'
         str = printStruct(str, val);
+      case 'table'
+        str = printTable(str, val);
       otherwise
-        str = prt(str, '%dx%d %s', size(val,1), size(val,2), class(val));
+        % try other numerical types
+        if isnumeric(val)
+          str = prt(str, '%s(', class(val));
+          str = printVal(str, double(val));
+          str = prt(str, ')');
+        else
+          % try if the class has printable fields  
+          try
+            str = printStruct(str, val, class(val));
+          catch
+            str = prt(str, '%dx%d %s', size(val,1), size(val,2), class(val));
+          end
+        end
     end
   end
 end
@@ -202,11 +239,14 @@ function str = printArray(str, val)
   end
 end
 
-function str = printStruct(str, s)
-% prints structure s
+function str = printStruct(str, s, structName)
+% prints structure s or unknown type structName
 
+  if nargin < 3
+    structName = 'struct';
+  end
   sf = fieldnames(s);
-  str = prt(str, 'struct(');
+  str = prt(str, '%s(', structName);
   if ~isempty(sf)
     str = prt(str, '''%s'', ', sf{1});
     str = printVal(str, s.(sf{1}));
@@ -233,5 +273,39 @@ function str = printChar(str, val)
     str = prt(str, ']');
   else
     str = prt(str, '''%s''', val);
+  end
+end
+
+function str = printTable(str, tab)
+% prints table tab
+  varNames = tab.Properties.VariableNames;
+  str = prt(str, 'table(');
+  if ~isempty(tab)
+    % all columns
+    for v = 1:numel(varNames)
+      str = printVal(str, tab.(varNames{v}));
+      str = prt(str, ', ');
+    end
+    % variable names
+    str = prt(str, '''VariableNames'', ');
+    str = printVal(str, tab.Properties.VariableNames);
+    % row names
+    str = prt(str, ', ''RowNames'', ');
+    str = printVal(str, tab.Properties.RowNames);
+  end
+  str = prt(str, ')');
+end
+
+function str = printEmpty(str, val)
+% print empty value
+  switch class(val)
+    case 'cell'
+      str = prt(str, '{}');
+    case 'char'
+      str = prt(str, '''''');
+    case 'table'
+      str = prt(str, 'table()');
+    otherwise
+      str = prt(str, '[]');
   end
 end

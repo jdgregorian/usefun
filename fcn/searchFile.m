@@ -32,12 +32,16 @@ function fileList = listFolder(folder, pattern)
 % recursive function searching 'pattern' in 'folder'
 
   % find directories in folder
+  % fprintf('%s\n', folder)
   folderList = dir(folder);
+  % exclude '.' and '..' from folderList
+  folderList = removePositionFolders(folderList);
+  % locate directories
   directories = find([folderList.isdir]);
-  % exclude '.' and '..'
-  directories(1:2) = [];
   % find files according to pattern
   fileList = dir(fullfile(folder, pattern));
+  % exclude '.' and '..' from fileList
+  fileList = removePositionFolders(fileList);
   fileList = cellfun(@(x) fullfile(folder, x), {fileList(:).name}, 'UniformOutput', false)';
   % search all subdirectories
   for f = 1:length(directories)
@@ -46,3 +50,11 @@ function fileList = listFolder(folder, pattern)
   
 end
 
+function list = removePositionFolders(list)
+% remove . and .. from file list
+
+  remId = strcmp({list.name}, '.');
+  remId = remId | strcmp({list.name}, '..');
+  list(remId) = [];
+
+end

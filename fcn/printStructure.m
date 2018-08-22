@@ -112,7 +112,7 @@ function str = printStructure(structure, varargin)
     end
 
     % print to file
-      fprintf(FID, str);
+      fprintf(FID, '%s', str);
       clear str
 
     % close opened file

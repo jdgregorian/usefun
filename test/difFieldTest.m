@@ -52,7 +52,7 @@ function testEmptyFields(testCase)
 end
 
 function testNaNFields(testCase) 
-% test differences with empty or missing fields of structures
+% test differences with NaN fields of structures
 
   s1.a = 1;
   s1.b = 'txt';

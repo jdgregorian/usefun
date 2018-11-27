@@ -22,6 +22,10 @@ function ind = coor2ind(coor, matSize)
   
   cellCoor = num2cell(coor);
   ind = zeros(size(coor, 1), 1);
+  % matSize vector must have at least 2 elements
+  if numel(matSize) < 2
+    matSize(2) = 1;
+  end
   for i = 1:size(coor, 1)
     ind(i) = sub2ind(matSize, cellCoor{i, :});
   end

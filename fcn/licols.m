@@ -36,6 +36,12 @@ function [Xsub, idx] = licols(X, tol)
     tol = eps;
   end
 
+  % transform table input into array
+  if istable(X)
+    Xtab = X;
+    X = table2array(X);
+  end
+  
   % X has no non-zeros and hence no independent columns
   if ~nnz(X)
     return
@@ -55,6 +61,12 @@ function [Xsub, idx] = licols(X, tol)
   r = find(diagr >= tol*diagr(1), 1, 'last');
 
   idx = sort([E(1:r), find(isNaNInf)]);
-  Xsub = X(:, idx);
+  % table case
+  if exist('Xtab', 'var')
+    Xsub = Xtab(:, idx);
+  % array case
+  else
+    Xsub = X(:, idx);
+  end
    
 end

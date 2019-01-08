@@ -1,5 +1,15 @@
 function ind = cvInd(n, k)
 % ind = cvInd(n, k) generate k-fold cross-validation indices for n objects
+%
+% Input:
+%   n - number of objects
+%   k - number of folds
+%
+% Output:
+%   ind - cross-validation indices
+%
+% See Also:
+%   crossvalind
 
   if nargin < 2
     if nargin < 1

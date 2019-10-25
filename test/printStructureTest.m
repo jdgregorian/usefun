@@ -37,3 +37,15 @@ function testTable(testCase)
     '''RowNames'', {''r1''; ''r2''; ''r3''});\n']))
  
 end
+
+function testObject(testCase)
+% test object input
+
+  % empty TestClass
+  s = TestClass();
+  str = printStructure(s);
+  verifyEqual(testCase, str, sprintf(...
+    ['s = TestClass(''Property'', [], ''ConstantProperty'', ''const'',', ...
+     ' ''DependentProperty'', {''const'', []});\n']))
+
+end

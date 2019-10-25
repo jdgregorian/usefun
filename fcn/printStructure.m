@@ -186,7 +186,9 @@ function str = printVal(str, val)
         else
           % try if the class has printable fields  
           try
-            str = printStruct(str, val, class(val));
+            warning('off', 'MATLAB:structOnObject')
+            str = printStruct(str, struct(val), class(val));
+            warning('on', 'MATLAB:structOnObject')
           catch
             str = prt(str, '%dx%d %s', size(val,1), size(val,2), class(val));
           end

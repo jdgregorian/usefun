@@ -200,6 +200,13 @@ end
 function str = printArray(str, val)
 % function prints array
 
+  % warn if the val dimension is greater than 2
+  if ~ismatrix(val)
+    warning('usefun:printStructure:largedim', ...
+      ['Variable contains array with dimension greater than 2 (%d). ', ...
+       'Only the first two dimensions will be printed.'], ndims(val))
+  end
+
   % cell array
   if iscell(val)
     str = prt(str, '{');

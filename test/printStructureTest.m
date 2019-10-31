@@ -49,3 +49,25 @@ function testObject(testCase)
      ' ''DependentProperty'', {''const'', []});\n']))
 
 end
+
+function testStructureArray(testCase)
+% test multidimensional structure input
+
+  % one dimensional row vector
+  s = [struct('a', 1), struct('a', 2)];
+  str = printStructure(s);
+  verifyEqual(testCase, str, ['s(1).a = 1;', char(10), 's(2).a = 2;', char(10)])
+
+  % one dimensional column vector
+  s = [struct('a', 1); struct('a', 2)];
+  str = printStructure(s);
+  verifyEqual(testCase, str, ['s(1,1).a = 1;', char(10), 's(2,1).a = 2;', char(10)])
+
+  % multidimensional vector
+  sm(1, 2, 1, 2).a = 1;
+  str = printStructure(sm);
+  verifyEqual(testCase, str, ['sm(1,1,1,1).a = [];', char(10), ...
+                              'sm(1,1,1,2).a = [];', char(10), ...
+                              'sm(1,2,1,1).a = [];', char(10), ...
+                              'sm(1,2,1,2).a = 1;',  char(10)])
+end

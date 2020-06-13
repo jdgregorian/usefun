@@ -1,10 +1,18 @@
-function print2pdf(handle, pdfname, overwrite)
-% Print figures to pdf in format displayed on the screen.
+function print2pdf(handles, pdfname, overwrite)
+% PRINT2PDF Print figures to pdf in format displayed on the screen.
+%   PRINT2PDF(handles) print figures to pdf to current folder named
+%   figure1.pdf, figure2pdf, ...
+%
+%   PRINT2PDF(handles, pdfname) print figures to pdf to files defined in
+%  ''pdfname''.
+%
+%   PRINT2PDF(handles, pdfname, overwrite) automatically overwrite figures
+%   in files defined in ''pdfname'' according to ''overwrite'' variable
+%   (true or false).
 %
 % Input:
-%   handle    - handles of figures | cell-array
-%   pdfname   - string or cell array of strings containing resulting 
-%               filenames
+%   handles   - handles of figures | handle or cell-array of handles
+%   pdfname   - resulting filenames | string or cell array of strings
 %   overwrite - automatically overwrite without asking | boolean | double
 
   if nargin < 1
@@ -12,19 +20,30 @@ function print2pdf(handle, pdfname, overwrite)
     return
   end
 
-  nFig = length(handle);
-  if nargin < 2
+  nFig = length(handles);
+  if nFig == 0
+    warning('usefun:print2pdf:emptyInput', 'Zero number of handles.')
+    return
+  elseif nargin < 2 || isempty(pdfname)
+    pdfname = cell(1, nFig);
     for f = 1:nFig
       pdfname{f} = ['figure', num2str(f), '.pdf'];
     end
   end
   % pass handle input to cell-array
-  if ishandle(handle)
-    handle = num2cell(handle);
+  if ishandle(handles)
+    handles = num2cell(handles);
   end
   if ischar(pdfname)
     pdfname = {pdfname};
   end
+  % check variable validity
+  assert(iscell(handles) && all(cellfun(@ishandle, handles)), ...
+    'usefun:print2pdf:wrongHandleInput', ...
+    'Input variable ''handles'' has to be handle or cell-array of handles.')
+  assert(iscell(pdfname) && all(cellfun(@ischar, pdfname)), ...
+    'usefun:print2pdf:wrongPdfnameInput', ...
+    'Input variable ''pdfname'' has to be string or cell-array of strings.')
 
   nNames = length(pdfname);
   % check if names end with .pdf
@@ -44,17 +63,16 @@ function print2pdf(handle, pdfname, overwrite)
         fprintf('%s\n',pdfname{f})
       end
     else
-    error('Numbers of figures and names does not agree!')
+    error('usefun:print2pdf:nFigNames', 'Numbers of figures and names does not agree!')
     end
   end
 
   % count existing files
   existingPDFs = [];
   for f = 1:nFig
-    pdfFolderId = strfind(pdfname{f}, filesep);
-    pdfFolder = pdfname{f}(1:pdfFolderId(end) - 1);
+    pdfFolder = fileparts(pdfname{f});
     if ~exist(pdfFolder, 'dir')
-      mkdir(pdfFolder)
+      [~, ~] = mkdir(pdfFolder);
     elseif exist(pdfname{f},'file')
       existingPDFs(end+1) = f;            
     end
@@ -78,12 +96,12 @@ function print2pdf(handle, pdfname, overwrite)
   % print plot to pdf
   if overwrite
     for f = 1:nFig
-      set(handle{f},'PaperPositionMode','auto')
-      print(handle{f},'-dpdf','-r0',pdfname{f});
+      set(handles{f},'PaperPositionMode','auto')
+      print(handles{f},'-dpdf','-r0',pdfname{f});
     end
   else
     for f = 1:NexistPDF
-      set(handle{existingPDFs(f)},'PaperPositionMode','auto')
+      set(handles{existingPDFs(f)},'PaperPositionMode','auto')
       print('-dpdf','-r0',pdfname{existingPDFs(f)});
     end
   end

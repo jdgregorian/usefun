@@ -1,6 +1,14 @@
-function str = num2tex(num)
-% str = num2tex(num) returns string created from number in form 
+function str = num2tex(num, dec)
+% str = num2tex(num, dec) returns string created from number in form 
 % convenient for tex printing.
+%
+% Input:
+%   num - number to convert | double
+%   dec - amount of numbers to show in converted result | positive non-zero
+%         integer
+%
+% Output:
+%   str - resulting number in tex format | string
 %
 % Example:
 %   num = 15000000;
@@ -9,7 +17,12 @@ function str = num2tex(num)
 %
 %   1.5*10^{7}
 
-  base_str = sprintf('%g', num);
+  if nargin < 2 || isempty(dec)
+    base_str = sprintf('%g', num);
+  else
+    base_str = sprintf(['%.', num2str(dec), 'g'], num);
+  end
+  
   eLoc = strfind(base_str, 'e');
   % number without exponent
   if isempty(eLoc)

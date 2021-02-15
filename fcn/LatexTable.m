@@ -48,7 +48,6 @@ classdef LatexTable < handle
 %   headerRow - LaTeX header row
 %   headerCol - LaTeX header column
 %   formats - formats for individual cells
-%   grayLevelRow - gray-scale values for each row
 %
 % Formatting-string to set the precision of the table values:
 %   For using different formats in different rows use a cell array like
@@ -146,7 +145,6 @@ classdef LatexTable < handle
     headerRow
     headerCol
     formats
-    grayLevelRow
   end
   
   methods
@@ -227,7 +225,7 @@ classdef LatexTable < handle
         error('Data has to be either table, cell array, or numeric matrix');
       end
       this.formats = cell(size(this.data));
-      this.grayLevelRow = [];
+      this.opts.grayLevelRow = [];
     end
     
     function n = getNRows(this)
@@ -271,11 +269,48 @@ classdef LatexTable < handle
     end
     
     function setFormatXY(this, i, j, formatStr)
-      % set the printf-like format for the coordinates x,y
-      if (~ischar(formatStr))
-        error('Format has to be a string');
+      % set the sprintf-like format for the coordinates x,y
+      %
+      % setFormatXY(formatStr) - sets specified format to all cells
+      %
+      % setFormatXY(X, formatStr) - sets specified format to cells marked
+      %                             as true in logical matrix X
+      %
+      % setFormatXY(x, y, formatStr) - sets specified format to cell with
+      %                                coordinates in row x and column y
+      %
+      % Input:
+      %   formatStr - sprintf-like format | string
+      %             - Note: remember some characters have special meanings
+      %               in sprinf (e.g. \)
+      %   X         - matrix identifying cells to format | logical matrix
+      %   x         - row number of the format | integer scalar
+      %   y         - column number of the format | integer scalar
+      %
+      % Example:
+      %   a = LatexTable([1, 2; 3, 4]);
+      %   % set \emph{%d} to row 1 column 2
+      %   a.setFormatXY(1, 2, '\\emph{%d}');
+      %   a.toStringTable
+      %
+      %   ans =
+      %
+      %     2x2 cell array
+      %
+      %       '1.0000'    '\emph{2}'
+      %       '3.0000'    '4.0000'
+
+      if nargin == 2 && ischar(i)
+        % set format to all fields
+        this.formats(:) = {i};
+      elseif nargin == 3 && islogical(i) && ischar(j)
+        % set format to fields specified in i
+        this.formats(i) = {j};
+      elseif nargin == 4 && isnatural(i) && isnatural(j) && ischar(formatStr)
+        this.formats{i,j} = formatStr;
+      else
+        error('usefun:LatexTable:wrongFormatSet', 'Format has to be a string')
       end
-      this.formats{i,j} = formatStr;
     end
     
     function prependFormatXY(this, i, j, formatStr)
@@ -389,7 +424,8 @@ classdef LatexTable < handle
         isHeaderCol = 1;
       end
       if (~isempty(this.headerRow))
-        stringTable = this.headerRow';
+        % ensure row cell-array
+        stringTable = this.headerRow(:)';
         isHeaderRow = 1;
       end
 
@@ -427,6 +463,31 @@ classdef LatexTable < handle
       % from the cell array of final LaTeX strings, generate the
       % final LaTeX code into 'latex' -- cell array of lines of code
       %
+      % latex = toStringRows(this) - generate the final LaTeX code
+      %
+      % latex = toStringRows(this, stringTable) - generate the final LaTeX
+      %                                           code from 'stringTable'
+      %
+      % Input:
+      %   stringTable - array of individual table cells | cell-array of
+      %                 string
+      %
+      % Output:
+      %   latex - lines of table LaTeX code | cell-array of string
+
+      if nargin < 2
+        stringTable = this.toStringTable;
+      end
+      % ensure all cell-array fields are string
+      assert(iscell(stringTable), 'usefun:LatexTable:ncellInput', ...
+        'Input is not a cell-array');
+      if any(any( ~cellfun(@ischar, stringTable) ))
+        warning('usefun:LatexTable:ncellChInput', ...
+          ['There is a cell containing non-char variable. ', ...
+           'All such cells will be replaced by '''''])
+        stringTable(~cellfun(@ischar, stringTable)) = {''};
+      end
+
       % make table header lines:
       hLine = '\hline';
       latex = {};
@@ -481,8 +542,11 @@ classdef LatexTable < handle
         nCols = size(stringTable, 2);
         
         for j = 1:nCols
+          % check for \multicolumn command
           [~, multiCols] = regexp(stringTable{i,j}, '\\multicolumn{([0-9]+)}', 'match', 'tokens');
+          % print stringTable field
           thisRow = [thisRow sprintf(['%' num2str(colWidths(j)) 's'], stringTable{i,j})];
+          % print separator according to \multicolumn presence
           if (~isempty(multiCols) && str2num(multiCols{1}{1}) > 1)
             skip = skip + (str2num(multiCols{1}{1}) - 1);
             thisRow = [thisRow, '   '];

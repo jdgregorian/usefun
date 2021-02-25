@@ -87,3 +87,21 @@ function testNaNFields(testCase)
   verifyEqual(testCase, emptyVal, logical([0, 0]));
   
 end
+
+function testObjectInput(testCase)
+% test when the input in an object
+
+  % input parser objects
+  o1 = inputParser;
+  o1.FunctionName = 'a';
+
+  o2 = inputParser;
+  o2.FunctionName = 'b';
+
+  % check results
+  [df, dVal, emptyVal] = difField(o1, o2);
+  verifyEqual(testCase, df, {'FunctionName'});
+  verifyEqual(testCase, dVal, {'a', 'b'});
+  verifyEqual(testCase, emptyVal, logical([0, 0]));
+
+end

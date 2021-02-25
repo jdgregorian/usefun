@@ -1,9 +1,10 @@
 function [df, dVals, emptyVals] = difField(varargin)
 % [df, dVals, emptyVals] = difField(s1, s2, ...) return structure different
-% field values and its fieldnames.
+% field values and its fieldnames. The function also work for objects.
 %
 % Input:
-%   s1, s2, ... - structures to compare | struct or cell-array of struct
+%   s1, s2, ... - structures or objects to compare | struct (object) or
+%                 cell-array of struct (object)
 %
 % Output:
 %   df        - different fields among tested structures | cell-array of 
@@ -25,17 +26,21 @@ function [df, dVals, emptyVals] = difField(varargin)
   end
 
   % put structrures and cell-arrays of structures to one cell-array
-  structId = cellfun(@isstruct, varargin);
+  structId = cellfun(@(x) isstruct(x) || isobject(x), varargin);
   cellId = cellfun(@iscell, varargin);
-  assert(all(structId | cellId), 'Input is not cell-array or structure')
+  assert(all(structId | cellId), ...
+         'usefun:difField:wrongInput', ...
+         'Input is not cell-array or structure')
   
   if any(cellId)
     strCell = [varargin{cellId}];
-    assert(all(cellfun(@isstruct, strCell)), 'There is a cell-array not containing a structure')
+    assert(all(cellfun(@(x) isstruct(x) || isobject(x), strCell)), ...
+           'usefun:difField:notStructCell', ...
+           'There is a cell-array not containing a structure')
   else
     strCell = {};
   end
-  strCell = [strCell, varargin{structId}];
+  strCell = [strCell, {varargin{structId}}];
   
   % one structure case is not comparable
   nStruct = length(strCell);

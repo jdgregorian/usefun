@@ -265,7 +265,7 @@ classdef LatexTable < handle
         error('The number of cells in colFormats does not agree with # cols of the data');
       end
       
-      this.formats = repmat(colFormats, this.nRows, 1);
+      this.formats = repmat(colFormats, this.getNRows(), 1);
     end
     
     function setFormatXY(this, i, j, formatStr)

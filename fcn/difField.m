@@ -34,13 +34,13 @@ function [df, dVals, emptyVals] = difField(varargin)
   
   if any(cellId)
     strCell = [varargin{cellId}];
-    assert(all(cellfun(@(x) isstruct(x) || isobject(x), strCell)), ...
+    assert(all(cellfun(@(x) isstruct(x) || isobject(x), strCell(:))), ...
            'usefun:difField:notStructCell', ...
            'There is a cell-array not containing a structure')
   else
     strCell = {};
   end
-  strCell = [strCell, {varargin{structId}}];
+  strCell = [strCell(:), {varargin{structId}}];
   
   % one structure case is not comparable
   nStruct = length(strCell);

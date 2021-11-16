@@ -33,7 +33,7 @@ function str = num2tex(num, dec)
     if strcmp(base_str(1:eLoc-1), '1')
       first_base = '';
     else
-      first_base = [base_str(1:eLoc-1), '*'];
+      first_base = [base_str(1:eLoc-1), '\cdot'];
     end
     % exponent sign difference
     if strcmp(base_str(eLoc+1), '+')

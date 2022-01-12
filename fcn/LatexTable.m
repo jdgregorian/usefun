@@ -356,8 +356,12 @@ classdef LatexTable < handle
       maxValue = max( max( values ) );
       for i = 1:size(values,1)
         for j = 1:size(values,2)
-          grayValue = ((values(i,j) - minValue) / (maxValue-minValue)) ...
-              * (maxGray - minGray) + minGray;
+          if minValue == maxValue
+            grayValue = (maxGray - minGray)/2 + minGray;
+          else
+            grayValue = ((values(i,j) - minValue) / (maxValue-minValue)) ...
+                * (maxGray - minGray) + minGray;
+          end
           if (grayValue < 1.0)
             this.prependFormatXY(row+i-1, col+j-1, ['\\cellcolor[gray]{' sprintf('%.4f', grayValue) '}']);
           end
@@ -448,11 +452,11 @@ classdef LatexTable < handle
             else
               thisFormat = '%s';
             end
-            if (~isempty(dataValue))
+            % if (~isempty(dataValue))
               dataValue = sprintf(thisFormat, dataValue);
-            else
-              dataValue = '';
-            end
+            % else
+            %  dataValue = '';
+            % end
           end
           stringTable{row+isHeaderRow, isHeaderCol + col} = dataValue;
         end
